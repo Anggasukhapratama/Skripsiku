@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IngatSkripsiku - Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f8fafc;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Animasi Transisi */
+        .task-enter { animation: slideIn 0.3s ease-out forwards; }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Circular Progress */
+        .progress-circle {
+            background: conic-gradient(var(--progress-color, #3b82f6) var(--progress, 0%), #e2e8f0 0deg);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .progress-inner {
+            background-color: white;
+            border-radius: 50%;
+        }
+
+        /* Checkbox Custom */
+        .custom-checkbox {
+            appearance: none;
+            background-color: #fff;
+            margin: 0;
+            font: inherit;
+            color: currentColor;
+            width: 1.5em;
+            height: 1.5em;
+            border: 2px solid #cbd5e1;
+            border-radius: 0.35em;
+            display: grid;
+            place-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .custom-checkbox::before {
+            content: "";
+            width: 0.8em;
+            height: 0.8em;
+            transform: scale(0);
+            transition: 120ms transform ease-in-out;
+            box-shadow: inset 1em 1em white;
+            background-color: transform;
+            transform-origin: center;
+            clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+        }
+        .custom-checkbox:checked {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+        }
+        .custom-checkbox:checked::before {
+            transform: scale(1);
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-2">
+                    <div class="bg-brand-500 text-white p-2 rounded-lg">
+                        <i class="fas fa-graduation-cap text-xl"></i>
+                    </div>
+                    <span class="font-bold text-xl tracking-tight text-slate-900">Ingat<span class="text-brand-500">Skripsiku</span></span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button onclick="openAlarmModal()" class="flex items-center justify-center gap-2 text-slate-600 hover:text-brand-600 hover:bg-brand-50 px-3 py-1.5 rounded-lg transition-colors font-medium border border-transparent hover:border-brand-200">
+                        <i class="fas fa-bell" id="alarm-icon"></i>
+                        <span id="alarm-display-nav" class="text-sm">Set Alarm</span>
+                    </button>
+                    <div class="hidden sm:block text-sm font-medium text-slate-500" id="current-date-display">
+                        <!-- Tanggal Hari Ini -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Header Section -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-slate-900">Selamat Berjuang, Pejuang S.Kom! 🚀</h1>
+            <p class="text-slate-500 mt-2">Pantau progresmu, selesaikan sistemnya, dan bersiaplah untuk sidang.</p>
+        </div>
+
+        <!-- Dashboard Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            
+            <!-- Card 1: Target Sidang & Countdown -->
+            <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-brand-50 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                <div class="relative z-10">
+                    <div class="flex justify-between items-start mb-4">
+                        <h2 class="text-slate-500 font-semibold text-sm uppercase tracking-wider">Target Akhir</h2>
+                        <button onclick="openTargetModal()" class="text-brand-500 hover:text-brand-600 bg-brand-50 p-1.5 rounded-lg transition" title="Ubah Tanggal Target">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                    <div class="flex gap-2 text-center mt-2" id="countdown-display">
+                        <!-- Countdown -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2: Progres Keseluruhan -->
+            <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex items-center gap-4">
+                <div class="progress-circle w-20 h-20 shrink-0" id="main-progress-circle" style="--progress: 0%; --progress-color: #3b82f6;">
+                    <div class="progress-inner w-16 h-16 flex flex-col items-center justify-center">
+                        <span class="text-xl font-bold text-slate-800" id="main-progress-text">0%</span>
+                    </div>
+                </div>
+                <div>
+                    <h2 class="text-slate-500 font-semibold text-xs uppercase tracking-wider mb-1">Progres Jadwal</h2>
+                    <p class="text-xs text-slate-400 mt-1 leading-snug" id="progress-quote">"Satu baris kode lebih baik dari nol."</p>
+                </div>
+            </div>
+
+            <!-- Card 3: Target Bimbingan (NEW) -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-center">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-slate-500 font-semibold text-xs uppercase tracking-wider"><i class="fas fa-chalkboard-teacher mr-1"></i> Bimbingan (Senin)</h2>
+                    <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-bold">Min 8x</span>
+                </div>
+                
+                <!-- P1: Bu Dyah -->
+                <div class="mb-3">
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="font-medium text-slate-700">Bu Dyah (P1)</span>
+                        <span class="font-bold text-brand-600" id="count-dyah">0/8</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                            <div class="h-full bg-brand-500 transition-all duration-500" id="bar-dyah" style="width: 0%"></div>
+                        </div>
+                        <div class="flex gap-1">
+                            <button onclick="updateBimbingan('dyah', -1)" class="text-slate-400 hover:text-red-500 bg-slate-50 hover:bg-red-50 px-1.5 rounded text-xs font-bold">-</button>
+                            <button onclick="updateBimbingan('dyah', 1)" class="text-brand-600 hover:text-brand-800 bg-brand-50 hover:bg-brand-100 px-1.5 rounded text-xs font-bold">+</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- P2: Bu Intan -->
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="font-medium text-slate-700">Bu Intan (P2)</span>
+                        <span class="font-bold text-emerald-600" id="count-intan">0/8</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                            <div class="h-full bg-emerald-500 transition-all duration-500" id="bar-intan" style="width: 0%"></div>
+                        </div>
+                        <div class="flex gap-1">
+                            <button onclick="updateBimbingan('intan', -1)" class="text-slate-400 hover:text-red-500 bg-slate-50 hover:bg-red-50 px-1.5 rounded text-xs font-bold">-</button>
+                            <button onclick="updateBimbingan('intan', 1)" class="text-emerald-600 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-1.5 rounded text-xs font-bold">+</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 4: Statistik Tugas -->
+            <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col justify-center">
+                <h2 class="text-slate-500 font-semibold text-xs uppercase tracking-wider mb-4">Statistik Jadwal</h2>
+                <div class="grid grid-cols-3 gap-2 text-center">
+                    <div>
+                        <p class="text-2xl font-bold text-slate-800" id="stat-total">0</p>
+                        <p class="text-[10px] uppercase text-slate-500 mt-1">Total</p>
+                    </div>
+                    <div>
+                        <p class="text-2xl font-bold text-emerald-500" id="stat-done">0</p>
+                        <p class="text-[10px] uppercase text-slate-500 mt-1">Selesai</p>
+                    </div>
+                    <div>
+                        <p class="text-2xl font-bold text-brand-500" id="stat-pending">0</p>
+                        <p class="text-[10px] uppercase text-slate-500 mt-1">Sisa</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Utama: Tiga Kolom (Kiri: Tambah Jadwal, Kanan: Jadwal Umum & Draft Bab) -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Kiri: Form Tambah Jadwal -->
+            <div class="lg:col-span-1 space-y-6">
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm sticky top-24">
+                    <h2 class="text-lg font-bold text-slate-800 mb-4"><i class="fas fa-calendar-plus text-brand-500 mr-2"></i>Tambah Jadwal / Target</h2>
+                    <form id="add-task-form" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Nama Target Pekerjaan</label>
+                            <input type="text" id="input-title" required placeholder="Contoh: Revisi Sistem Admin..." 
+                                   class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Kategori</label>
+                            <select id="input-category" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all bg-white">
+                                <option value="Sistem">💻 Koding & Sistem</option>
+                                <option value="Bimbingan">👨‍🏫 Bimbingan Dosen</option>
+                                <option value="Revisi">🔄 Revisi</option>
+                                <option value="Penulisan">📝 Penulisan Umum</option>
+                                <option value="Administrasi">📋 Administrasi/Daftar</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Tenggat Waktu (Deadline)</label>
+                            <input type="date" id="input-date" required
+                                   class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all text-slate-700">
+                        </div>
+                        <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 px-4 rounded-xl transition-all shadow-md shadow-brand-200 flex items-center justify-center gap-2">
+                            <i class="fas fa-save"></i> Simpan ke Jadwal Umum
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Kanan: Area List (Jadwal Umum & Draft Bab) -->
+            <div class="lg:col-span-2 space-y-6">
+                
+                <!-- Area 1: Drafting Penulisan Bab Terperinci (NEW) -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
+                        <h2 class="text-lg font-bold text-slate-800"><i class="fas fa-list-ul text-emerald-500 mr-2"></i>Checklist Detail Bab (Drafting)</h2>
+                        <form id="add-draft-form" class="flex gap-2 w-full sm:w-auto">
+                            <input type="text" id="input-draft" required placeholder="Bab 1.1 Latar Belakang..." 
+                                   class="flex-grow sm:w-64 px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
+                            <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors">
+                                Tambah
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                        <div id="draft-list-container" class="space-y-2 max-h-60 overflow-y-auto pr-2">
+                            <!-- Drafts akan di-render di sini -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Area 2: Jadwal Umum / Milestone -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                    <div class="flex border-b border-slate-200 bg-slate-50 px-6 pt-4 gap-6 items-center justify-between">
+                        <div class="flex gap-6">
+                            <button onclick="setFilter('all')" id="tab-all" class="pb-3 text-sm font-semibold border-b-2 transition-colors border-brand-500 text-brand-600">Jadwal Umum</button>
+                            <button onclick="setFilter('pending')" id="tab-pending" class="pb-3 text-sm font-semibold border-b-2 transition-colors border-transparent text-slate-500 hover:text-slate-700">Belum Selesai</button>
+                        </div>
+                        <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 hidden sm:block"><i class="far fa-calendar-check mr-1"></i> Timeline</h2>
+                    </div>
+
+                    <div class="p-6">
+                        <div id="task-list-container" class="space-y-3">
+                            <!-- Tasks akan di-render di sini -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Atur Target Tanggal -->
+    <div id="target-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl transform scale-95 transition-transform duration-300" id="target-modal-content">
+            <h3 class="text-xl font-bold text-slate-900 mb-2">Atur Target Sidang Akhir</h3>
+            <p class="text-slate-500 text-sm mb-6">Tentukan tanggal target sidang atau pengumpulan akhir Anda untuk memulai hitung mundur.</p>
+            <input type="date" id="input-target-date" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 outline-none mb-6 text-lg">
+            <div class="flex justify-end gap-3">
+                <button onclick="closeTargetModal()" class="px-5 py-2.5 rounded-xl font-medium text-slate-600 hover:bg-slate-100 transition-colors">Batal</button>
+                <button onclick="saveTargetDate()" class="px-5 py-2.5 rounded-xl font-medium bg-brand-600 text-white hover:bg-brand-700 transition-colors shadow-sm">Simpan Target</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Alarm (NEW) -->
+    <div id="alarm-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl transform scale-95 transition-transform duration-300" id="alarm-modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-slate-900"><i class="fas fa-clock text-amber-500 mr-2"></i>Pengingat Harian</h3>
+                <button onclick="closeAlarmModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+            </div>
+            <p class="text-slate-500 text-sm mb-4">Setel jam pengingat agar Anda tidak lupa menyentuh skripsi setiap hari. (Pastikan tab ini tetap terbuka/aktif)</p>
+            
+            <div class="flex items-center gap-4 mb-6">
+                <input type="time" id="input-alarm-time" class="flex-grow px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 outline-none text-2xl font-bold text-center">
+            </div>
+            
+            <div class="flex justify-end gap-3">
+                <button onclick="disableAlarm()" class="px-4 py-2.5 rounded-xl font-medium text-red-600 bg-red-50 hover:bg-red-100 transition-colors text-sm">Matikan Alarm</button>
+                <button onclick="saveAlarmTime()" class="px-5 py-2.5 rounded-xl font-medium bg-brand-600 text-white hover:bg-brand-700 transition-colors shadow-sm text-sm">Simpan Pengingat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Utama Aplikasi -->
+    <script>
+        // --- 1. STATE & DATA MANAGEMENT ---
+        let state = {
+            tasks: [],
+            targetDate: null,
+            filter: 'all', // all, pending, completed
+            bimbingan: { dyah: 0, intan: 0 },
+            drafts: [],
+            alarmTime: null,
+            lastAlarmed: null
+        };
+
+        const KATEGORI_COLORS = {
+            'Penulisan': 'bg-blue-100 text-blue-700 border-blue-200',
+            'Sistem': 'bg-purple-100 text-purple-700 border-purple-200',
+            'Bimbingan': 'bg-emerald-100 text-emerald-700 border-emerald-200',
+            'Revisi': 'bg-amber-100 text-amber-700 border-amber-200',
+            'Administrasi': 'bg-slate-100 text-slate-700 border-slate-200',
+        };
+
+        // Audio Context untuk Alarm Beep
+        let audioCtx = null;
+
+        // Inisialisasi Audio on first click supaya browser mengizinkan
+        document.body.addEventListener('click', () => {
+            if(!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if(AudioContext) audioCtx = new AudioContext();
+            }
+        }, {once: true});
+
+
+        // --- 2. INITIALIZATION ---
+        function init() {
+            // Load data dari LocalStorage & migrasi struktur lama ke baru
+            const savedData = localStorage.getItem('skripsi_pro_data');
+            if (savedData) {
+                const parsed = JSON.parse(savedData);
+                state = { ...state, ...parsed }; // Merge default dengan data tersimpan
+            }
+
+            // Set tanggal hari ini di Navbar
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('current-date-display').innerText = new Date().toLocaleDateString('id-ID', options);
+
+            // Set input min date to today
+            const todayStr = new Date().toISOString().split('T')[0];
+            document.getElementById('input-date').min = todayStr;
+            document.getElementById('input-target-date').min = todayStr;
+
+            // Request Notification Permission early if not denied
+            if (Notification.permission === 'default') {
+                setTimeout(() => Notification.requestPermission(), 2000);
+            }
+
+            renderApp();
+            startCountdown();
+        }
+
+        function saveData() {
+            localStorage.setItem('skripsi_pro_data', JSON.stringify(state));
+        }
+
+        // --- 3. RENDER LOGIC KESELURUHAN ---
+        function renderApp() {
+            renderTasks();
+            renderDrafts();
+            renderBimbingan();
+            updateStats();
+            updateTabs();
+            updateAlarmUI();
+        }
+
+        // -- Render: Sub-bab (Drafting) --
+        function renderDrafts() {
+            const container = document.getElementById('draft-list-container');
+            container.innerHTML = '';
+            
+            if(state.drafts.length === 0) {
+                container.innerHTML = `<p class="text-sm text-slate-400 text-center py-4 italic">Belum ada rincian bab. Tambahkan "1.1 Latar Belakang" di atas.</p>`;
+                return;
+            }
+
+            state.drafts.forEach((draft, index) => {
+                const div = document.createElement('div');
+                div.className = `flex items-center justify-between p-2 rounded-lg transition-colors ${draft.completed ? 'bg-emerald-50 text-slate-400' : 'bg-white text-slate-700 border border-slate-100'}`;
+                
+                div.innerHTML = `
+                    <div class="flex items-center gap-3 w-full cursor-pointer" onclick="toggleDraft(${draft.id})">
+                        <div class="w-5 h-5 rounded border flex items-center justify-center shrink-0 ${draft.completed ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300'} transition-colors">
+                            ${draft.completed ? '<i class="fas fa-check text-xs"></i>' : ''}
+                        </div>
+                        <span class="text-sm font-medium ${draft.completed ? 'line-through' : ''}">${draft.title}</span>
+                    </div>
+                    <button onclick="deleteDraft(${draft.id})" class="text-slate-300 hover:text-red-500 px-2 py-1 rounded transition-colors"><i class="fas fa-trash text-xs"></i></button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // -- Render: Bimbingan Tracker --
+        function renderBimbingan() {
+            const limit = 8;
+            
+            ['dyah', 'intan'].forEach(dosen => {
+                const count = state.bimbingan[dosen];
+                const percentage = Math.min((count / limit) * 100, 100);
+                
+                document.getElementById(`count-${dosen}`).innerText = `${count}/${limit}`;
+                document.getElementById(`bar-${dosen}`).style.width = `${percentage}%`;
+                
+                // Ganti warna bar jika sudah lulus target
+                if(count >= limit) {
+                    document.getElementById(`bar-${dosen}`).classList.add('bg-emerald-500');
+                    document.getElementById(`bar-${dosen}`).classList.remove('bg-brand-500');
+                }
+            });
+        }
+
+        // -- Render: Jadwal Umum (Tasks) --
+        function renderTasks() {
+            const container = document.getElementById('task-list-container');
+            container.innerHTML = '';
+
+            let filteredTasks = state.tasks;
+            if (state.filter === 'pending') filteredTasks = state.tasks.filter(t => !t.completed);
+            else if (state.filter === 'completed') filteredTasks = state.tasks.filter(t => t.completed);
+
+            filteredTasks.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            if (filteredTasks.length === 0) {
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-8 text-center text-slate-400">
+                        <p class="text-sm font-medium text-slate-600">Jadwal Kosong.</p>
+                        <p class="text-xs mt-1">Tambahkan target besar di panel kiri.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const today = new Date();
+            today.setHours(0,0,0,0);
+
+            filteredTasks.forEach(task => {
+                const taskDate = new Date(task.date);
+                const isOverdue = !task.completed && taskDate < today;
+                const catStyle = KATEGORI_COLORS[task.category] || KATEGORI_COLORS['Administrasi'];
+
+                const div = document.createElement('div');
+                div.className = `task-enter group flex items-start gap-3 p-3 sm:p-4 rounded-xl border transition-all ${isOverdue ? 'border-red-300 bg-red-50' : task.completed ? 'border-slate-100 bg-slate-50 opacity-75' : 'border-slate-200 bg-white hover:border-brand-300 hover:shadow-md'}`;
+                
+                div.innerHTML = `
+                    <div class="pt-1">
+                        <input type="checkbox" class="custom-checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}')">
+                    </div>
+                    <div class="flex-grow min-w-0">
+                        <div class="flex flex-wrap items-center gap-2 mb-1">
+                            <span class="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-md border ${catStyle}">${task.category}</span>
+                            ${isOverdue ? '<span class="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-md bg-red-100 text-red-600 border border-red-200 animate-pulse"><i class="fas fa-exclamation-circle mr-1"></i>Terlewat</span>' : ''}
+                        </div>
+                        <h3 class="text-sm sm:text-base font-semibold truncate ${task.completed ? 'line-through text-slate-400' : 'text-slate-800'} transition-all" title="${task.title}">${task.title}</h3>
+                        <p class="text-xs ${isOverdue ? 'text-red-500 font-medium' : 'text-slate-500'} mt-1 flex items-center gap-1.5">
+                            <i class="far fa-calendar-alt"></i> ${formatDate(task.date)}
+                        </p>
+                    </div>
+                    <button onclick="deleteTask('${task.id}')" class="text-slate-300 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-50 focus:outline-none" title="Hapus Tugas">
+                        <i class="fas fa-trash-alt text-sm"></i>
+                    </button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // -- Update UI: Statistik --
+        function updateStats() {
+            const total = state.tasks.length;
+            const done = state.tasks.filter(t => t.completed).length;
+            const pending = total - done;
+            const percentage = total === 0 ? 0 : Math.round((done / total) * 100);
+
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-done').innerText = done;
+            document.getElementById('stat-pending').innerText = pending;
+
+            const circle = document.getElementById('main-progress-circle');
+            const text = document.getElementById('main-progress-text');
+            const quote = document.getElementById('progress-quote');
+            
+            circle.style.setProperty('--progress', `${percentage}%`);
+            
+            let color = '#3b82f6';
+            if (percentage === 100) color = '#10b981';
+            else if (percentage > 0 && percentage < 30) color = '#f59e0b';
+            
+            circle.style.setProperty('--progress-color', color);
+            text.innerText = `${percentage}%`;
+            text.style.color = color;
+
+            if (total === 0) quote.innerText = "Target masih kosong!";
+            else if (percentage === 0) quote.innerText = "Langkah pertama terberat. Ayo mulai!";
+            else if (percentage < 50) quote.innerText = "Konsistensi adalah kuncinya!";
+            else if (percentage < 100) quote.innerText = "Sudah lebih separuh jalan. Semangat!";
+            else quote.innerText = "Semua jadwal beres! 🎓🎉";
+        }
+
+        function updateTabs() {
+            const tabs = ['all', 'pending', 'completed'];
+            tabs.forEach(tab => {
+                const el = document.getElementById(`tab-${tab}`);
+                if(!el) return;
+                if (state.filter === tab) el.className = "pb-3 text-sm font-semibold border-b-2 transition-colors border-brand-500 text-brand-600";
+                else el.className = "pb-3 text-sm font-semibold border-b-2 transition-colors border-transparent text-slate-500 hover:text-slate-700";
+            });
+        }
+
+        // --- 4. ACTION LOGIC ---
+        
+        // Target Umum
+        document.getElementById('add-task-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const newTask = {
+                id: Date.now(),
+                title: document.getElementById('input-title').value,
+                category: document.getElementById('input-category').value,
+                date: document.getElementById('input-date').value,
+                completed: false
+            };
+            state.tasks.push(newTask);
+            saveData();
+            this.reset();
+            if(state.filter === 'completed') setFilter('pending');
+            else renderApp();
+        });
+
+        window.toggleTask = function(id) {
+            const task = state.tasks.find(t => String(t.id) === String(id));
+            if (task) { task.completed = !task.completed; saveData(); renderApp(); }
+        };
+
+        window.deleteTask = function(id) {
+            if (confirm("Hapus target jadwal ini?")) {
+                state.tasks = state.tasks.filter(t => String(t.id) !== String(id));
+                saveData(); renderApp();
+            }
+        };
+
+        // Sub-bab (Draft)
+        document.getElementById('add-draft-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const draftInput = document.getElementById('input-draft');
+            if(!draftInput.value.trim()) return;
+            state.drafts.push({
+                id: Date.now(),
+                title: draftInput.value.trim(),
+                completed: false
+            });
+            draftInput.value = '';
+            saveData();
+            renderDrafts();
+        });
+
+        window.toggleDraft = function(id) {
+            const draft = state.drafts.find(d => String(d.id) === String(id));
+            if (draft) { draft.completed = !draft.completed; saveData(); renderDrafts(); }
+        }
+
+        window.deleteDraft = function(id) {
+            state.drafts = state.drafts.filter(d => String(d.id) !== String(id));
+            saveData(); renderDrafts();
+        }
+
+        // Bimbingan
+        window.updateBimbingan = function(dosen, increment) {
+            state.bimbingan[dosen] += increment;
+            if (state.bimbingan[dosen] < 0) state.bimbingan[dosen] = 0;
+            saveData(); renderBimbingan();
+        }
+
+        window.setFilter = function(filterValue) {
+            state.filter = filterValue;
+            saveData(); renderApp();
+        };
+
+        // --- 5. ALARM & REMINDER (NEW) ---
+        const alarmModal = document.getElementById('alarm-modal');
+        const alarmModalContent = document.getElementById('alarm-modal-content');
+
+        window.openAlarmModal = function() {
+            if(state.alarmTime) document.getElementById('input-alarm-time').value = state.alarmTime;
+            alarmModal.classList.remove('hidden');
+            setTimeout(() => { alarmModal.classList.remove('opacity-0'); alarmModalContent.classList.remove('scale-95'); }, 10);
+        };
+
+        window.closeAlarmModal = function() {
+            alarmModal.classList.add('opacity-0'); alarmModalContent.classList.add('scale-95');
+            setTimeout(() => { alarmModal.classList.add('hidden'); }, 300);
+        };
+
+        window.saveAlarmTime = function() {
+            const time = document.getElementById('input-alarm-time').value;
+            if(time) {
+                state.alarmTime = time;
+                state.lastAlarmed = null; // Reset today trigger
+                if (Notification.permission !== 'granted') Notification.requestPermission();
+                saveData();
+                updateAlarmUI();
+                closeAlarmModal();
+            }
+        }
+
+        window.disableAlarm = function() {
+            state.alarmTime = null;
+            saveData();
+            updateAlarmUI();
+            closeAlarmModal();
+        }
+
+        function updateAlarmUI() {
+            const display = document.getElementById('alarm-display-nav');
+            const icon = document.getElementById('alarm-icon');
+            if(state.alarmTime) {
+                display.innerText = state.alarmTime;
+                icon.classList.add('text-brand-600', 'animate-pulse');
+            } else {
+                display.innerText = "Set Alarm";
+                icon.classList.remove('text-brand-600', 'animate-pulse');
+            }
+        }
+
+        function playBeep() {
+            try {
+                if(!audioCtx) return;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.type = 'sine'; osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+                
+                setTimeout(() => {
+                    const osc2 = audioCtx.createOscillator();
+                    const gain2 = audioCtx.createGain();
+                    osc2.connect(gain2); gain2.connect(audioCtx.destination);
+                    osc2.type = 'sine'; osc2.frequency.setValueAtTime(1000, audioCtx.currentTime);
+                    gain2.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                    osc2.start(); osc2.stop(audioCtx.currentTime + 0.8);
+                }, 700);
+            } catch(e) { console.log('Audio error:', e); }
+        }
+
+        function checkAlarmRoutine() {
+            if(!state.alarmTime) return;
+            const now = new Date();
+            const currentHHMM = String(now.getHours()).padStart(2, '0') + ":" + String(now.getMinutes()).padStart(2, '0');
+            
+            if(currentHHMM === state.alarmTime && state.lastAlarmed !== currentHHMM) {
+                state.lastAlarmed = currentHHMM; // Hindari alarm spam berkali2 dalam 1 menit yg sama
+                saveData();
+                
+                playBeep();
+
+                // Notifikasi Desktop
+                if (Notification.permission === 'granted') {
+                    new Notification("IngatSkripsiku: Waktunya Ngerjain!", {
+                        body: "1 Jam untuk skripsi hari ini. Ayo selesaikan targetmu!",
+                        icon: "https://cdn-icons-png.flaticon.com/512/3135/3135810.png"
+                    });
+                }
+                
+                // Notifikasi In-App
+                setTimeout(() => {
+                    alert("⏰ WAKTUNYA NGERJAIN SKRIPSI!\n\nJangan ditunda, mari cicil satu sub-bab atau satu baris kode hari ini!");
+                }, 500);
+            }
+        }
+
+        // --- 6. COUNTDOWN SIDANG ---
+        const modalTarget = document.getElementById('target-modal');
+        const modalTargetContent = document.getElementById('target-modal-content');
+
+        window.openTargetModal = function() {
+            if(state.targetDate) document.getElementById('input-target-date').value = state.targetDate;
+            modalTarget.classList.remove('hidden');
+            setTimeout(() => { modalTarget.classList.remove('opacity-0'); modalTargetContent.classList.remove('scale-95'); }, 10);
+        };
+        window.closeTargetModal = function() {
+            modalTarget.classList.add('opacity-0'); modalTargetContent.classList.add('scale-95');
+            setTimeout(() => { modalTarget.classList.add('hidden'); }, 300);
+        };
+        window.saveTargetDate = function() {
+            const newDate = document.getElementById('input-target-date').value;
+            if (newDate) { state.targetDate = newDate; saveData(); renderApp(); closeTargetModal(); updateCountdownDisplay(); }
+        };
+
+        function startCountdown() {
+            updateCountdownDisplay();
+            setInterval(() => {
+                updateCountdownDisplay();
+                checkAlarmRoutine(); // Selipkan cek alarm tiap detik
+            }, 1000);
+        }
+
+        function updateCountdownDisplay() {
+            const display = document.getElementById('countdown-display');
+            if (!state.targetDate) {
+                display.innerHTML = `<div class="w-full py-2 text-slate-400 text-xs font-medium border-2 border-dashed border-slate-200 rounded-lg text-center mt-2">Pilih ikon edit di atas</div>`;
+                return;
+            }
+            const targetTime = new Date(state.targetDate).setHours(23, 59, 59, 999);
+            const now = new Date().getTime();
+            const distance = targetTime - now;
+
+            if (distance < 0) {
+                display.innerHTML = `<div class="w-full py-3 bg-brand-50 text-brand-700 font-bold rounded-lg border border-brand-200 animate-pulse text-sm text-center">WAKTUNYA SIDANG! 🎓🔥</div>`;
+                return;
+            }
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+            display.innerHTML = `
+                <div class="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-2 shadow-inner">
+                    <span class="block text-2xl font-bold text-slate-800">${String(days).padStart(2, '0')}</span>
+                    <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Hari</span>
+                </div>
+                <div class="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-2 shadow-inner">
+                    <span class="block text-2xl font-bold text-slate-800">${String(hours).padStart(2, '0')}</span>
+                    <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Jam</span>
+                </div>
+            `;
+        }
+
+        function formatDate(dateString) {
+            const options = { day: 'numeric', month: 'short', year: 'numeric' };
+            return new Date(dateString).toLocaleDateString('id-ID', options);
+        }
+
+        // Start Application
+        init();
+    </script>
+</body>
+</html>
